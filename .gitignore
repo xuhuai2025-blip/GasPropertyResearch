@@ -1,0 +1,8 @@
+# User-supplied or generated real-gas tables can be large.
+*.mat
+!tables/
+!tables/*.mat
+
+# MATLAB local/session files
+*.asv
+*.mlx~

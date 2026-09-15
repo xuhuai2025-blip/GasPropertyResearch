@@ -4,6 +4,8 @@ function [mu,k] = heliumTransport(T,rho)
 % as implemented in CoolProp TransportRoutines.cpp (helium hardcoded).
 % Background conductivity only; this implementation excludes T < 20 K.
 % rho is kg/m^3. EOS and caloric properties are intentionally separate.
+gasprop.checkRange(T,[20,830],'gasprop:HeliumTransportRange','Helium transport temperature [K]');
+gasprop.checkRange(rho,[0,160],'gasprop:HeliumTransportRange','Helium transport density [kg/m^3]');
 if gasprop.validation(),gaspropcheck.transport('helium',T,rho);end
 r=rho/1000; x=log(min(T,300));
 low=exp(-.135311743./x+1.00347841+1.20654649*x ...

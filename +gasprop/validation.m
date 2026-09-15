@@ -2,6 +2,7 @@ function enabled=validation(setting)
 %VALIDATION Session-wide optional checks; disabled in a fresh MATLAB session.
 %   gasprop.validation(true) enables checks in validation/+gaspropcheck.
 %   gasprop.validation(false) disables them; gasprop.validation() reads the flag.
+%   Temperature/pressure range guards remain active regardless of this flag.
 persistent active
 if isempty(active), active=false; end
 if nargin

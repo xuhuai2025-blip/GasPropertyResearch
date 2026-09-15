@@ -8,12 +8,12 @@
 addpath("D:\VibeCodingWorkSpace\GasPropertyResearch")
 enabled = gasprop.validation(); % 新会话默认 false
 gasprop.validation(true);       % 开启检查并加入 validation 路径
-gasprop.validation(false);      % 关闭可选诊断；范围保护仍开启
+gasprop.validation(false);      % 关闭检查
 ```
 
-温压范围保护直接实现在核心包 `+gasprop/checkRange.m`，始终开启且不依赖本目录；T-rho 查表也保护比容支撑范围。`+gaspropcheck/` 仅存放额外的输入、数据结构和状态诊断。会话开关只控制这些可选诊断，构造或加载数据的检查需要在这些操作之前开启。求根收敛处理和模型分派错误同样不受此开关影响。
+`+gaspropcheck/` 统一存放输入、范围、数据结构和状态检查。开关作用于当前 MATLAB 会话中的全部对象；构造或加载数据的检查需要在这些操作之前开启。关闭时调用者负责提供有效数据和工作域内状态，不保证越界或无效状态被拒绝。求根收敛处理和模型分派错误不受此开关影响。
 
-开关只控制可选诊断，不会启动下面的整表扫描或外部对照。
+开关只控制保护性检查，不会启动下面的整表扫描或外部对照。
 
 ## 整表审计
 

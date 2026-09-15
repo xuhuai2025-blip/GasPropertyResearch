@@ -55,19 +55,17 @@ gas = gas.withTransportModel("reference");
 
 精确范围以元数据为准。这里采用整个压力区间都适用的保守矩形域，会排除部分低温低压气态工况。NIST He EOS 的独立范围为 20–1500 K，旧输运相关式为 20–830 K、密度不超过 160 kg/m³；10 K 氦气可使用 Tabular。
 
-## 范围保护与可选校验
+## 校验开关：默认关闭
 
-温压越界检查始终开启，不受可选校验开关影响。Tabular 热力学与输运、RK 及其参考曲线、NIST He 都拒绝超出各自有效范围的查询。T-rho 查表同时检查比容支撑范围；压力端点保留极小的反演舍入容差。Ideal 没有查表温压上限。
-
-温压范围检查直接实现在核心包 `+gasprop/checkRange.m`，不添加路径、不依赖 `validation/`。核心包配合所需 `data/` 物性表即可独立运行。其余输入、数据结构和状态诊断放在 `validation/+gaspropcheck/`，由默认关闭的会话开关控制：
+所有保护性输入、范围、数据结构和状态检查统一放在 `validation/+gaspropcheck/`，由当前 MATLAB 会话的一个开关控制：
 
 ```matlab
 gasprop.validation()       % 查询开关；新会话默认 false
 gasprop.validation(true)   % 开启，并将 validation 加入 path
-gasprop.validation(false)  % 关闭可选诊断，范围保护仍开启
+gasprop.validation(false)  % 关闭
 ```
 
-开关影响本会话的全部气体对象。需要检查构造或表加载时，应先开启再创建对象。关闭时仍明确拒绝温压越界，但不执行额外的数据格式和状态稳定性诊断；必要的数值求根收敛处理和模型分派错误仍保留。
+开关影响本会话的全部气体对象。需要检查构造或表加载时，应先开启再创建对象。关闭时由调用者保证输入、数据和温压域有效，**不保证越界拒绝或无效状态诊断**；必要的数值求根收敛处理和模型分派错误仍保留。
 
 开启开关不会自动运行整表扫描或 REFPROP 对照。需要独立校验时显式调用：
 
@@ -85,9 +83,7 @@ REFPROP 对照会临时开启保护性检查，正常结束或报错后恢复原
 
 ```text
 +gasprop/
-  create.m, GasProperties.m, gasCatalog.m, modelCatalog.m
-  checkRange.m          始终开启的核心范围保护
-  validation.m          可选诊断开关，默认关闭
+  create.m, GasProperties.m, gasCatalog.m, modelCatalog.m, validation.m
   +eos/                 四种 EOS 与内部数值算法
   +transport/           输运模型
   +table/               表加载与编译

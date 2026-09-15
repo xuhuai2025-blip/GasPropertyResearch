@@ -79,11 +79,9 @@ classdef RKGas
         end
 
         function s=state(obj,T,rho)
-            gasprop.checkRange(T,[obj.MinimumTemperatureK,obj.MaximumTemperatureK],'gasprop:RKRange','RK temperature [K]');
             if gasprop.validation(),gaspropcheck.eosRK('stateInput',obj,T,rho);end
             shape=T+rho; T=T+zeros(size(shape)); rho=rho+zeros(size(shape));
             [p,pT,pr]=obj.pressureTerms(T,rho);
-            gasprop.checkRange(p,obj.PressureRangePa,'gasprop:RKRange','RK pressure [Pa]',5e-10);
             if gasprop.validation(),gaspropcheck.eosRK('pressure',obj,p);end
             a=obj.A; b=obj.B; br=b*rho;
             u=obj.IdealCv*T-1.5*a/b./sqrt(T).*log1p(br);
@@ -101,8 +99,6 @@ classdef RKGas
 
         function rho=density(obj,T,p)
             % Algebraic gas root of Sage equation (18.18), then roundoff polish.
-            gasprop.checkRange(T,[obj.MinimumTemperatureK,obj.MaximumTemperatureK],'gasprop:RKRange','RK temperature [K]');
-            gasprop.checkRange(p,obj.PressureRangePa,'gasprop:RKRange','RK pressure [Pa]',5e-10);
             if gasprop.validation(),gaspropcheck.eosRK('densityInput',obj,T,p);end
             shape=T+p; T=T+zeros(size(shape)); p=p+zeros(size(shape));
             ar=obj.A*p./(obj.R^2*T.^2.5); br=obj.B*p./(obj.R*T);
@@ -142,7 +138,6 @@ classdef RKGas
 
         function value=idealCp(obj,T)
             % Temperature-dependent dilute Cp for property/transport queries.
-            gasprop.checkRange(T,[obj.MinimumTemperatureK,obj.MaximumTemperatureK],'gasprop:RKRange','RK reference temperature [K]');
             if gasprop.validation(),gaspropcheck.eosRK('idealCp',obj,T,obj.CpTemperatureRange);end
             if isempty(obj.CpCurve)
                 value=obj.IdealCv+obj.R+zeros(size(T));

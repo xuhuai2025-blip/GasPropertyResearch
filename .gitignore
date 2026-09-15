@@ -1,8 +1,19 @@
 # User-supplied or generated real-gas tables can be large.
 *.mat
-!tables/
-!tables/*.mat
+!data/*-refprop.mat
+!data/rk-reference.mat
+
+# Reproducible scratch output and verbose validation arrays.
+/tmp/
+/validation/results/
+/results/
+/output/
+/scratch/
+*.log
+*.tmp
+*.bak
 
 # MATLAB local/session files
 *.asv
 *.mlx~
+slprj/

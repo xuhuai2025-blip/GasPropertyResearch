@@ -1,0 +1,39 @@
+function info=fluidInfo(fluid,installation)
+%FLUIDINFO Query library limits and conservative all-pressure gas bounds.
+[tc,pc,mw,rhoc]=refpropm('TPMD','C',0,' ',0,fluid.File);
+version=refpropm('0','T',300,'P',100,fluid.File);
+[~,~,~,~,~,~,~,~,~,~,Rmol]=calllib('refprop','INFOdll',1,0,0,0,0,0,0,0,0,0,0);
+z=[1 zeros(1,19)];
+limits=struct();
+for name={'EOS','ETA','TCX'}
+    [~,~,tmin,tmax,dmax,pmax]=calllib('refprop','LIMITSdll',uint8(name{1}),z,0,0,0,0,3);
+    limits.(name{1})=struct('MinimumTemperatureK',tmin,'MaximumTemperatureK',tmax, ...
+        'MaximumMolarDensityMolPerL',dmax,'MaximumPressurePa',pmax*1000);
+end
+[~,~,tmelt,ierr,herr]=calllib('refprop','MELTPdll',20000,z,0,0,32*ones(255,1),255);
+if gasprop.validation(), gaspropcheck.refpropBuild('melting',fluid,tmelt,ierr,herr); end
+fluidPath=fullfile(installation.BasePath,installation.FluidDir,fluid.File);
+% Read the active melting model's declared range; MELTP must not extrapolate.
+source=fileread(fluidPath);
+block=regexp(source,'(?s)#MLT.*?!end of info section\s*([^\r\n]+)\s*([^\r\n]+)','tokens','once');
+if isempty(block)
+    error('refpropbuild:MissingPhaseBoundary','No melting-model range in %s.',fluid.File);
+end
+meltingRange=[sscanf(block{1},'%f',1),sscanf(block{2},'%f',1)];
+if gasprop.validation(), gaspropcheck.refpropBuild('meltingRange',tmelt,meltingRange); end
+minimum=max([10,ceil(tc*1.001),ceil(tmelt+0.1), ...
+    limits.EOS.MinimumTemperatureK,limits.ETA.MinimumTemperatureK,limits.TCX.MinimumTemperatureK]);
+maximum=min([800,limits.EOS.MaximumTemperatureK,limits.ETA.MaximumTemperatureK,limits.TCX.MaximumTemperatureK]);
+if gasprop.validation(), gaspropcheck.refpropBuild('domain',minimum,maximum,fluid); end
+info=struct('Version',version,'FluidFile',fluid.File, ...
+    'FluidFileSHA256',refpropbuild.sha256(fluidPath), ...
+    'REFPROPMolarMassKgPerMol',mw/1000,'CriticalTemperatureK',tc,'CriticalPressurePa',pc*1000, ...
+    'CriticalDensityKgPerM3',rhoc,'MeltingModelTemperatureRangeK',meltingRange, ...
+    'REFPROPGasConstantJPerMolK',Rmol,'REFPROPGasConstantJPerKgK',Rmol/(mw/1000), ...
+    'RuntimeGasConstantJPerKgK',fluid.GasConstant, ...
+    'MeltingTemperatureAt20MPaK',tmelt,'Limits',limits, ...
+    'MinimumTemperatureK',minimum,'MaximumTemperatureK',maximum, ...
+    'PhasePolicy','T above the physical critical temperature and the 20 MPa melting line; gas or supercritical fluid.', ...
+    'BoundaryAdjustmentReason','Conservative rectangular T-p domain excludes subcritical liquid/two-phase states and the solid region; no extrapolation.', ...
+    'IsPseudoPure',strcmpi(fluid.File,'air.ppf'));
+end
